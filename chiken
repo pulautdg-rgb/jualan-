@@ -1,0 +1,1070 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  ShoppingBag, X, Store, User, MapPin, Phone, Search, 
+  CheckCircle, Clock, ChefHat, AlertCircle, Plus, Minus, 
+  Trash2, Navigation, Utensils, Award, Sparkles, ChevronRight,
+  Filter, Tag, ArrowRight, ShieldCheck, RefreshCw, Layers
+} from 'lucide-react';
+
+// ==========================================
+// MOCK DATA & TYPES DEFINITIONS
+// ==========================================
+const MENU_ITEMS = [
+  {
+    id: 'cireng-ori',
+    name: 'Cireng Crispy Original',
+    description: 'Cireng renyah di luar, lembut di dalam dengan bumbu rujak pedas manis khas.',
+    category: 'Cireng Crispy',
+    basePrice: 12000,
+    regulerPrice: 12000,
+    fillingPrice: 16000,
+    inStock: true,
+    isBestSeller: true,
+    image: 'https://images.unsplash.com/photo-1626804475297-4160820cc4ce?auto=format&fit=crop&w=600&q=80',
+    availableFillings: ['Bumbu Rujak Extra', 'Bumbu Tabur Balado', 'Bumbu Tabur Keju']
+  },
+  {
+    id: 'cireng-isi-ayam',
+    name: 'Cireng Isi Ayam Suwir Pedas',
+    description: 'Cireng dengan isian daging ayam suwir melimpah yang dimasak dengan bumbu balado pedas gurih.',
+    category: 'Cireng Isi',
+    basePrice: 15000,
+    regulerPrice: 15000,
+    fillingPrice: 18000,
+    inStock: true,
+    isBestSeller: true,
+    image: 'https://images.unsplash.com/photo-1541544741938-0af808871cc0?auto=format&fit=crop&w=600&q=80',
+    availableFillings: ['Pedas Mercon (Level 3)', 'Pedas Sedang (Level 1)', 'Keju Mozzarella Melt']
+  },
+  {
+    id: 'cireng-mozarella',
+    name: 'Cireng Mozzarella Lumer',
+    description: 'Keju mozzarella mulur maksimal terbalut adonan cireng renyah gurih.',
+    category: 'Cireng Isi',
+    basePrice: 18000,
+    regulerPrice: 18000,
+    fillingPrice: 22000,
+    inStock: true,
+    isBestSeller: false,
+    image: 'https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?auto=format&fit=crop&w=600&q=80',
+    availableFillings: ['Original Mozza', 'Mozza Chili Flakes', 'Mozza Sosis']
+  },
+  {
+    id: 'cilok-kuah',
+    name: 'Cilok Kuah Mercon',
+    description: 'Cilok kenyal disiram kuah kaldu pedas berempah dengan taburan bawang goreng dan seledri.',
+    category: 'Jajanan Kuah',
+    basePrice: 14000,
+    regulerPrice: 14000,
+    fillingPrice: 17000,
+    inStock: true,
+    isBestSeller: false,
+    image: 'https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?auto=format&fit=crop&w=600&q=80',
+    availableFillings: ['Isi Jeroan Pedas', 'Isi Keju Slice', 'Polos']
+  },
+  {
+    id: 'es-teh-poci',
+    name: 'Es Teh Poci Segar',
+    description: 'Es teh manis segar khas poci racikan alami penyegar setelah makan pedas.',
+    category: 'Minuman',
+    basePrice: 5000,
+    regulerPrice: 5000,
+    inStock: true,
+    isBestSeller: false,
+    image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&w=600&q=80'
+  }
+];
+
+const INITIAL_ORDERS = [
+  {
+    id: 'ORD-9821',
+    orderNumber: 'CR-9821',
+    customer: {
+      name: 'Budi Santoso',
+      whatsapp: '081234567890',
+      address: 'Jl. Merdeka No. 45, Bandung',
+      notes: 'Bumbu rujaknya dipisah ya kak'
+    },
+    items: [
+      {
+        cartItemId: 'cireng-ori-reguler-none',
+        menuItem: MENU_ITEMS[0],
+        variant: 'reguler',
+        price: 12000,
+        quantity: 2
+      }
+    ],
+    totalAmount: 24000,
+    status: 'Diproses',
+    createdAt: new Date().toISOString(),
+    isNew: false
+  }
+];
+
+// ==========================================
+// SUB-COMPONENTS
+// ==========================================
+
+// 1. HEADER COMPONENT
+function Header({ currentMode, onSelectMode, activeOrderCount, newOrdersCount, onOpenLocation, onScrollToMenu }) {
+  return (
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-red-100 shadow-xs">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-3 cursor-pointer" onClick={onScrollToMenu}>
+          <div className="w-10 h-10 rounded-2xl bg-red-600 flex items-center justify-center text-white font-black text-xl shadow-md shadow-red-200">
+            C
+          </div>
+          <div>
+            <h1 className="font-extrabold text-lg text-slate-900 leading-tight">Cireng Crispy Juara</h1>
+            <p className="text-xs text-red-600 font-semibold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              Buka • Outlet Dipatiukur
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-4">
+          <button
+            onClick={onOpenLocation}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-700 text-xs font-bold hover:bg-red-100 transition cursor-pointer"
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            Lokasi Outlet
+          </button>
+
+          {/* Mode Switcher Toggle */}
+          <div className="bg-slate-100 p-1 rounded-xl flex items-center border border-slate-200">
+            <button
+              onClick={() => onSelectMode('buyer')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                currentMode === 'buyer' 
+                  ? 'bg-white text-red-600 shadow-xs' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              Menu Pembeli
+            </button>
+            <button
+              onClick={() => onSelectMode('merchant')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 relative ${
+                currentMode === 'merchant' 
+                  ? 'bg-red-600 text-white shadow-xs' 
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" />
+              Dapur/Kasir
+              {newOrdersCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-900 text-[10px] font-black flex items-center justify-center animate-bounce">
+                  {newOrdersCount}
+                </span>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// 2. HERO BANNER
+function HeroBanner({ onExploreMenu, onOpenLocation }) {
+  return (
+    <div className="relative rounded-3xl bg-gradient-to-r from-red-600 via-red-500 to-amber-500 text-white p-6 sm:p-10 overflow-hidden shadow-xl shadow-red-200">
+      <div className="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+        <Utensils className="w-96 h-96" />
+      </div>
+      <div className="relative z-10 max-w-2xl space-y-4">
+        <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase text-amber-200 border border-white/20">
+          <Sparkles className="w-3.5 h-3.5" /> Jajanan Street Food No. 1
+        </div>
+        <h2 className="text-3xl sm:text-5xl font-black tracking-tight leading-tight">
+          Cireng Crispy Lumer & Sensasi Pedas Mercon!
+        </h2>
+        <p className="text-red-100 text-sm sm:text-base leading-relaxed">
+          Dibuat hangat dadakan dari adonan tapioka kualitas super dengan varian isian ayam suwir pedas, keju mozzarella mulur, dan bumbu bumbu racikan rahasia.
+        </p>
+        <div className="pt-2 flex flex-wrap items-center gap-3">
+          <button
+            onClick={onExploreMenu}
+            className="px-6 py-3 rounded-2xl bg-white text-red-600 font-extrabold text-sm hover:bg-amber-50 transition shadow-lg shadow-black/10 active:scale-95 cursor-pointer"
+          >
+            Pesan Sekarang
+          </button>
+          <button
+            onClick={onOpenLocation}
+            className="px-5 py-3 rounded-2xl bg-black/20 hover:bg-black/30 backdrop-blur-sm text-white font-bold text-sm border border-white/20 transition flex items-center gap-2 cursor-pointer"
+          >
+            <MapPin className="w-4 h-4" /> Petunjuk Lokasi
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// 3. MENU CATALOG & ITEM CARDS
+function MenuCatalog({ items, onAddToCart }) {
+  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [selectedFillings, setSelectedFillings] = useState({});
+  const [selectedVariants, setSelectedVariants] = useState({});
+
+  const categories = ['Semua', 'Cireng Crispy', 'Cireng Isi', 'Jajanan Kuah', 'Minuman'];
+
+  const filteredItems = selectedCategory === 'Semua' 
+    ? items 
+    : items.filter(item => item.category === selectedCategory);
+
+  const handleVariantSelect = (itemId, variant) => {
+    setSelectedVariants(prev => ({ ...prev, [itemId]: variant }));
+  };
+
+  const handleFillingSelect = (itemId, filling) => {
+    setSelectedFillings(prev => ({ ...prev, [itemId]: filling }));
+  };
+
+  return (
+    <section id="katalog-menu" className="space-y-6">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+          <h2 className="text-2xl font-black text-slate-900">Katalog Menu</h2>
+          <p className="text-xs text-slate-500">Pilih varian rasa & isian favoritmu</p>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            onClick={() => setSelectedCategory(cat)}
+            className={`px-4 py-2 rounded-xl text-xs font-extrabold whitespace-nowrap transition-all cursor-pointer ${
+              selectedCategory === cat
+                ? 'bg-red-600 text-white shadow-md shadow-red-200'
+                : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
+
+      {/* Menu Cards Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {filteredItems.map((item) => {
+          const currentVariant = selectedVariants[item.id] || 'reguler';
+          const currentFilling = selectedFillings[item.id] || (item.availableFillings ? item.availableFillings[0] : '');
+
+          const price = currentVariant === 'filling' && item.fillingPrice 
+            ? item.fillingPrice 
+            : item.regulerPrice || item.basePrice;
+
+          return (
+            <div 
+              key={item.id}
+              className={`bg-white rounded-2xl border ${item.inStock ? 'border-slate-200' : 'border-slate-100 opacity-60'} p-4 flex flex-col justify-between shadow-xs hover:shadow-md transition`}
+            >
+              <div>
+                <div className="relative h-40 -mx-4 -mt-4 mb-3 overflow-hidden rounded-t-2xl bg-slate-100">
+                  <img 
+                    src={item.image} 
+                    alt={item.name} 
+                    className="w-full h-full object-cover"
+                  />
+                  {item.isBestSeller && (
+                    <span className="absolute top-3 left-3 bg-amber-400 text-slate-900 font-black text-[10px] px-2.5 py-1 rounded-full uppercase shadow-xs flex items-center gap-1">
+                      <Award className="w-3 h-3" /> Best Seller
+                    </span>
+                  )}
+                  {!item.inStock && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center text-white font-extrabold text-sm uppercase">
+                      Stok Habis
+                    </div>
+                  )}
+                </div>
+
+                <h3 className="font-bold text-slate-900 text-base">{item.name}</h3>
+                <p className="text-xs text-slate-500 mt-1 line-clamp-2">{item.description}</p>
+
+                {/* Variant Selector Options if available */}
+                {item.availableFillings && item.availableFillings.length > 0 && (
+                  <div className="mt-3 space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <div className="flex gap-2 text-xs font-bold">
+                      <button
+                        onClick={() => handleVariantSelect(item.id, 'reguler')}
+                        className={`flex-1 py-1 rounded-lg border text-[11px] cursor-pointer ${
+                          currentVariant === 'reguler'
+                            ? 'bg-red-600 text-white border-red-600'
+                            : 'bg-white text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        Reguler (Rp {item.regulerPrice.toLocaleString('id-ID')})
+                      </button>
+                      <button
+                        onClick={() => handleVariantSelect(item.id, 'filling')}
+                        className={`flex-1 py-1 rounded-lg border text-[11px] cursor-pointer ${
+                          currentVariant === 'filling'
+                            ? 'bg-red-600 text-white border-red-600'
+                            : 'bg-white text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        Extra Isian (+Rp {(item.fillingPrice - item.regulerPrice).toLocaleString('id-ID')})
+                      </button>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        Pilihan Varian/Isian:
+                      </label>
+                      <select
+                        value={currentFilling}
+                        onChange={(e) => handleFillingSelect(item.id, e.target.value)}
+                        className="w-full text-xs font-semibold p-1.5 rounded-lg border border-slate-200 bg-white text-slate-800"
+                      >
+                        {item.availableFillings.map((f) => (
+                          <option key={f} value={f}>{f}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold block">HARGA</span>
+                  <span className="font-black text-red-600 text-lg">
+                    Rp {price.toLocaleString('id-ID')}
+                  </span>
+                </div>
+
+                <button
+                  disabled={!item.inStock}
+                  onClick={() => onAddToCart(item, currentVariant, item.availableFillings ? currentFilling : undefined)}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs shadow-md shadow-red-200 active:scale-95 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Tambah
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// 4. CART & CHECKOUT
+function CartCheckout({ cart, customerData, onUpdateCustomerData, onUpdateQuantity, onRemoveItem, onClearCart, onCreateOrder }) {
+  const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  const handleSubmitOrder = (e) => {
+    e.preventDefault();
+    if (cart.length === 0) return;
+    if (!customerData.name || !customerData.whatsapp) {
+      alert('Mohon isi nama dan nomor WhatsApp kamu terlebih dahulu.');
+      return;
+    }
+
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const newOrder = {
+      id: `ORD-${randomNum}`,
+      orderNumber: `CR-${randomNum}`,
+      customer: customerData,
+      items: cart,
+      totalAmount: subtotal,
+      status: 'Menunggu Konfirmasi',
+      createdAt: new Date().toISOString(),
+      isNew: true
+    };
+
+    onCreateOrder(newOrder);
+  };
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-sm space-y-5 sticky top-20">
+      <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 className="font-extrabold text-lg text-slate-900 flex items-center gap-2">
+          <ShoppingBag className="w-5 h-5 text-red-600" /> Keranjang Pesanan
+        </h3>
+        {cart.length > 0 && (
+          <button 
+            onClick={onClearCart}
+            className="text-xs text-red-500 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <Trash2 className="w-3.5 h-3.5" /> Bersihkan
+          </button>
+        )}
+      </div>
+
+      {cart.length === 0 ? (
+        <div className="py-8 text-center space-y-2">
+          <ShoppingBag className="w-12 h-12 text-slate-300 mx-auto" />
+          <p className="text-sm font-bold text-slate-400">Keranjang masih kosong</p>
+          <p className="text-xs text-slate-400">Pilih menu cireng favoritmu di samping</p>
+        </div>
+      ) : (
+        <>
+          {/* Cart Item List */}
+          <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
+            {cart.map((item) => (
+              <div key={item.cartItemId} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                <div className="flex-1 pr-2">
+                  <p className="font-bold text-xs text-slate-800">{item.menuItem.name}</p>
+                  <p className="text-[10px] text-slate-500">
+                    {item.variant === 'filling' ? 'Extra Isian' : 'Reguler'} 
+                    {item.selectedFilling ? ` • ${item.selectedFilling}` : ''}
+                  </p>
+                  <p className="font-black text-xs text-red-600 mt-0.5">
+                    Rp {(item.price * item.quantity).toLocaleString('id-ID')}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => onUpdateQuantity(item.cartItemId, -1)}
+                    className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+                  >
+                    -
+                  </button>
+                  <span className="text-xs font-extrabold w-4 text-center">{item.quantity}</span>
+                  <button
+                    onClick={() => onUpdateQuantity(item.cartItemId, 1)}
+                    className="w-6 h-6 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold flex items-center justify-center hover:bg-slate-100 cursor-pointer"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => onRemoveItem(item.cartItemId)}
+                    className="text-slate-400 hover:text-red-500 ml-1 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="border-t border-slate-100 pt-3 space-y-2">
+            <div className="flex justify-between text-xs text-slate-500">
+              <span>Subtotal Menu</span>
+              <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+            </div>
+            <div className="flex justify-between font-black text-base text-slate-900 pt-1 border-t border-dashed">
+              <span>Total Bayar</span>
+              <span className="text-red-600">Rp {subtotal.toLocaleString('id-ID')}</span>
+            </div>
+          </div>
+
+          {/* Form Pemesanan */}
+          <form onSubmit={handleSubmitOrder} className="space-y-3 pt-2 border-t border-slate-100">
+            <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">Data Pemesan</h4>
+            <input
+              type="text"
+              placeholder="Nama Lengkap *"
+              value={customerData.name}
+              onChange={(e) => onUpdateCustomerData({ name: e.target.value })}
+              required
+              className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-red-500"
+            />
+            <input
+              type="tel"
+              placeholder="Nomor WhatsApp / HP *"
+              value={customerData.whatsapp}
+              onChange={(e) => onUpdateCustomerData({ whatsapp: e.target.value })}
+              required
+              className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-red-500"
+            />
+            <textarea
+              placeholder="Catatan Khusus (Opsional)"
+              value={customerData.notes}
+              onChange={(e) => onUpdateCustomerData({ notes: e.target.value })}
+              rows={2}
+              className="w-full text-xs p-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-red-500"
+            />
+
+            <button
+              type="submit"
+              className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-red-200 transition active:scale-98 cursor-pointer"
+            >
+              Buat Pesanan Langsung
+            </button>
+          </form>
+        </>
+      )}
+    </div>
+  );
+}
+
+// 5. OUTLET INFO
+function OutletInfo({ onOpenDirections }) {
+  return (
+    <div className="bg-slate-900 text-white rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
+      <div className="space-y-2 text-center md:text-left">
+        <span className="bg-red-500/20 text-red-400 border border-red-500/30 text-[10px] font-extrabold uppercase px-3 py-1 rounded-full">
+          Outlet Resmi
+        </span>
+        <h3 className="text-xl font-black">Cireng Crispy Juara - Dipatiukur</h3>
+        <p className="text-xs text-slate-400 max-w-md">
+          Jl. Dipati Ukur No. 102 (Samping Campus Center), Bandung, Jawa Barat. Buka Setiap Hari jam 10:00 - 22:00 WIB.
+        </p>
+      </div>
+      <button
+        onClick={onOpenDirections}
+        className="px-5 py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs shadow-lg shadow-red-900/40 flex items-center gap-2 whitespace-nowrap cursor-pointer"
+      >
+        <Navigation className="w-4 h-4" /> Buka di Google Maps
+      </button>
+    </div>
+  );
+}
+
+// 6. MERCHANT DASHBOARD (Dapur / Kasir)
+function MerchantDashboard({ orders, menuItems, onUpdateOrderStatus, onToggleStock, onReturnToBuyerMode }) {
+  const [activeTab, setActiveTab] = useState('orders');
+
+  const statusList = ['Menunggu Konfirmasi', 'Diproses', 'Siap Diambil', 'Selesai', 'Dibatalkan'];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
+        <div>
+          <h2 className="text-xl font-black text-slate-900">Dashboard Merchant / Dapur</h2>
+          <p className="text-xs text-slate-500">Kelola pesanan masuk & ketersediaan stok bahan</p>
+        </div>
+        <button
+          onClick={onReturnToBuyerMode}
+          className="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+        >
+          &larr; Kembali ke Pembeli
+        </button>
+      </div>
+
+      <div className="flex gap-2 border-b border-slate-200 pb-2">
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer ${
+            activeTab === 'orders' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'
+          }`}
+        >
+          Pesanan Masuk ({orders.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('stock')}
+          className={`px-4 py-2 rounded-xl text-xs font-extrabold cursor-pointer ${
+            activeTab === 'stock' ? 'bg-slate-900 text-white' : 'bg-white text-slate-600'
+          }`}
+        >
+          Kelola Stok Menu
+        </button>
+      </div>
+
+      {activeTab === 'orders' ? (
+        <div className="space-y-4">
+          {orders.length === 0 ? (
+            <div className="bg-white p-8 text-center rounded-2xl border border-slate-200 text-slate-400 font-bold text-xs">
+              Belum ada pesanan masuk.
+            </div>
+          ) : (
+            orders.map((order) => (
+              <div key={order.id} className="bg-white p-5 rounded-2xl border border-slate-200 space-y-4 shadow-xs">
+                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                  <div>
+                    <span className="font-black text-sm text-slate-900">{order.orderNumber}</span>
+                    <span className="text-xs text-slate-400 ml-2">
+                      • {new Date(order.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-extrabold text-slate-500">Status:</span>
+                    <select
+                      value={order.status}
+                      onChange={(e) => onUpdateOrderStatus(order.id, e.target.value)}
+                      className="text-xs font-bold p-1.5 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 cursor-pointer"
+                    >
+                      {statusList.map((st) => (
+                        <option key={st} value={st}>{st}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <p className="font-extrabold text-slate-700">Pelanggan:</p>
+                    <p className="text-slate-900 font-bold">{order.customer.name} ({order.customer.whatsapp})</p>
+                    {order.customer.notes && (
+                      <p className="text-slate-500 italic mt-1 bg-amber-50 p-2 rounded-lg border border-amber-100">
+                        "{order.customer.notes}"
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="font-extrabold text-slate-700">Detail Menu:</p>
+                    <ul className="space-y-1 mt-1">
+                      {order.items.map((it, idx) => (
+                        <li key={idx} className="text-slate-800 flex justify-between">
+                          <span>
+                            {it.quantity}x {it.menuItem.name} {it.selectedFilling ? `(${it.selectedFilling})` : ''}
+                          </span>
+                          <span className="font-bold">Rp {(it.price * it.quantity).toLocaleString('id-ID')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="mt-2 pt-2 border-t border-slate-100 font-black text-sm flex justify-between text-red-600">
+                      <span>Total:</span>
+                      <span>Rp {order.totalAmount.toLocaleString('id-ID')}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      ) : (
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 space-y-3">
+          <h3 className="font-bold text-sm text-slate-900">Atur Ketersediaan Menu</h3>
+          <div className="divide-y divide-slate-100">
+            {menuItems.map((item) => (
+              <div key={item.id} className="py-3 flex items-center justify-between">
+                <div>
+                  <p className="font-bold text-xs text-slate-800">{item.name}</p>
+                  <p className="text-[10px] text-slate-400">{item.category}</p>
+                </div>
+                <button
+                  onClick={() => onToggleStock(item.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
+                    item.inStock 
+                      ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200' 
+                      : 'bg-red-100 text-red-700 hover:bg-red-200'
+                  }`}
+                >
+                  {item.inStock ? 'Tersedia' : 'Stok Habis'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// 7. MODALS
+function OrderConfirmationModal({ isOpen, order, onClose, onViewMyOrder }) {
+  if (!isOpen || !order) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-md w-full p-6 text-center space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+        <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+          <CheckCircle className="w-10 h-10" />
+        </div>
+        <div>
+          <h3 className="text-xl font-black text-slate-900">Pesanan Diterima!</h3>
+          <p className="text-xs text-slate-500 mt-1">
+            Nomor Pesanan Kamu: <strong className="text-red-600 font-extrabold">{order.orderNumber}</strong>
+          </p>
+        </div>
+
+        <div className="bg-slate-50 p-4 rounded-2xl text-left text-xs space-y-2 border border-slate-100">
+          <div className="flex justify-between font-bold text-slate-700">
+            <span>Pemesan:</span>
+            <span>{order.customer.name}</span>
+          </div>
+          <div className="flex justify-between font-bold text-slate-700">
+            <span>Status:</span>
+            <span className="text-amber-600 font-extrabold">{order.status}</span>
+          </div>
+          <div className="flex justify-between font-black text-slate-900 pt-2 border-t border-slate-200 text-sm">
+            <span>Total Bayar:</span>
+            <span className="text-red-600">Rp {order.totalAmount.toLocaleString('id-ID')}</span>
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <button
+            onClick={() => onViewMyOrder(order)}
+            className="w-full py-3 rounded-2xl bg-red-600 text-white font-extrabold text-xs shadow-md shadow-red-200 cursor-pointer"
+          >
+            Lacak Pesanan Saya
+          </button>
+          <button
+            onClick={onClose}
+            className="w-full py-2.5 rounded-2xl bg-slate-100 text-slate-700 font-bold text-xs hover:bg-slate-200 cursor-pointer"
+          >
+            Kembali ke Menu
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function OrderTrackerModal({ isOpen, onClose, orders, initialSearchTerm }) {
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
+
+  useEffect(() => {
+    setSearchTerm(initialSearchTerm || '');
+  }, [initialSearchTerm]);
+
+  if (!isOpen) return null;
+
+  const foundOrders = orders.filter(
+    (o) =>
+      o.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      o.customer.whatsapp.includes(searchTerm)
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
+          <Clock className="w-5 h-5 text-red-600" /> Pelacakan Pesanan
+        </h3>
+
+        <div className="relative">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
+          <input
+            type="text"
+            placeholder="Cari Order ID (contoh: CR-9821) atau No HP..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full text-xs pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:border-red-500"
+          />
+        </div>
+
+        <div className="space-y-3 pt-2">
+          {foundOrders.length === 0 ? (
+            <p className="text-center text-xs font-bold text-slate-400 py-6">
+              Tidak ada pesanan yang cocok dengan kata kunci.
+            </p>
+          ) : (
+            foundOrders.map((ord) => (
+              <div key={ord.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                <div className="flex justify-between items-center font-bold">
+                  <span className="text-slate-900 font-extrabold">{ord.orderNumber}</span>
+                  <span className={`px-2.5 py-1 rounded-full text-[10px] uppercase font-black ${
+                    ord.status === 'Selesai' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {ord.status}
+                  </span>
+                </div>
+                <p className="text-slate-500 text-[11px]">Atas Nama: {ord.customer.name}</p>
+                <div className="border-t border-slate-200 pt-2 flex justify-between font-black text-slate-900">
+                  <span>Total Bayar:</span>
+                  <span className="text-red-600">Rp {ord.totalAmount.toLocaleString('id-ID')}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DirectionsModal({ isOpen, onClose }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl max-w-md w-full p-6 space-y-4 relative shadow-2xl">
+        <button onClick={onClose} className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 cursor-pointer">
+          <X className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center font-bold">
+            <MapPin className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="font-extrabold text-base text-slate-900">Petunjuk Lokasi</h3>
+            <p className="text-xs text-slate-500">Outlet Dipatiukur Bandung</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Outlet kami terletak persis di seberang halte bus Dipatiukur. Kamu dapat menemukan gerobak merah bertuliskan <strong>"Cireng Crispy Juara"</strong>.
+        </p>
+
+        <a
+          href="https://maps.google.com"
+          target="_blank"
+          rel="noreferrer"
+          className="block w-full py-3 rounded-2xl bg-red-600 text-white font-extrabold text-xs text-center shadow-md shadow-red-200 cursor-pointer"
+        >
+          Buka Peta Google Maps
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function Footer({ onOpenLocation, onSelectMode, onOpenOrderTracker }) {
+  return (
+    <footer className="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+        <p>&copy; 2026 Cireng Crispy Juara. Jajanan Khas Indonesia.</p>
+        <div className="flex items-center gap-4 font-bold">
+          <button onClick={onOpenOrderTracker} className="hover:text-white cursor-pointer">Lacak Pesanan</button>
+          <button onClick={onOpenLocation} className="hover:text-white cursor-pointer">Lokasi</button>
+          <button onClick={() => onSelectMode('merchant')} className="hover:text-white cursor-pointer">Mode Merchant</button>
+        </div>
+      </div>
+    </footer>
+  );
+}
+
+// ==========================================
+// MAIN APP COMPONENT
+// ==========================================
+export default function App() {
+  const [currentMode, setCurrentMode] = useState('buyer');
+  const [menuItems, setMenuItems] = useState(MENU_ITEMS);
+  const [cart, setCart] = useState([]);
+  
+  const [orders, setOrders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('cr_orders_v2');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {
+      console.error(e);
+    }
+    return INITIAL_ORDERS;
+  });
+
+  const [customerData, setCustomerData] = useState({
+    name: '',
+    whatsapp: '',
+    address: '',
+    notes: '',
+  });
+
+  const [isDirectionsOpen, setIsDirectionsOpen] = useState(false);
+  const [isTrackerOpen, setIsTrackerOpen] = useState(false);
+  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [trackerSearchTerm, setTrackerSearchTerm] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cr_orders_v2', JSON.stringify(orders));
+    } catch (e) {
+      console.error(e);
+    }
+  }, [orders]);
+
+  const handleAddToCart = (item, variant, selectedFilling) => {
+    const price = variant === 'filling' ? item.fillingPrice || item.basePrice : item.regulerPrice || item.basePrice;
+    const cartItemId = `${item.id}-${variant}-${selectedFilling || 'none'}`;
+
+    setCart((prevCart) => {
+      const existing = prevCart.find((ci) => ci.cartItemId === cartItemId);
+      if (existing) {
+        return prevCart.map((ci) =>
+          ci.cartItemId === cartItemId ? { ...ci, quantity: ci.quantity + 1 } : ci
+        );
+      }
+      return [
+        ...prevCart,
+        { cartItemId, menuItem: item, variant, selectedFilling, price, quantity: 1 }
+      ];
+    });
+  };
+
+  const handleUpdateQuantity = (cartItemId, delta) => {
+    setCart((prevCart) =>
+      prevCart
+        .map((ci) => {
+          if (ci.cartItemId === cartItemId) {
+            const newQty = ci.quantity + delta;
+            return newQty > 0 ? { ...ci, quantity: newQty } : null;
+          }
+          return ci;
+        })
+        .filter(Boolean)
+    );
+  };
+
+  const handleRemoveItem = (cartItemId) => {
+    setCart((prevCart) => prevCart.filter((ci) => ci.cartItemId !== cartItemId));
+  };
+
+  const handleClearCart = () => setCart([]);
+
+  const handleUpdateCustomerData = (data) => setCustomerData((prev) => ({ ...prev, ...data }));
+
+  const handleCreateOrder = (newOrder) => {
+    setOrders((prev) => [newOrder, ...prev]);
+    setCart([]);
+    setConfirmedOrder(newOrder);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleUpdateOrderStatus = (orderId, newStatus) => {
+    setOrders((prev) =>
+      prev.map((ord) => (ord.id === orderId ? { ...ord, status: newStatus, isNew: false } : ord))
+    );
+  };
+
+  const handleToggleStock = (menuId) => {
+    setMenuItems((prev) =>
+      prev.map((item) => (item.id === menuId ? { ...item, inStock: !item.inStock } : item))
+    );
+  };
+
+  const handleScrollToMenu = () => {
+    if (currentMode !== 'buyer') setCurrentMode('buyer');
+    setTimeout(() => {
+      const el = document.getElementById('katalog-menu');
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }, 60);
+  };
+
+  const newOrdersCount = orders.filter((o) => o.status === 'Menunggu Konfirmasi').length;
+  const activeOrderCount = orders.filter((o) => o.status !== 'Selesai' && o.status !== 'Dibatalkan').length;
+  const totalCartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const totalCartSubtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  return (
+    <div className="min-h-screen bg-[#fcf9f8] text-[#1b1b1c] flex flex-col font-sans selection:bg-red-200 selection:text-red-900">
+      <Header
+        currentMode={currentMode}
+        onSelectMode={setCurrentMode}
+        activeOrderCount={activeOrderCount}
+        newOrdersCount={newOrdersCount}
+        onOpenLocation={() => setIsDirectionsOpen(true)}
+        onScrollToMenu={handleScrollToMenu}
+      />
+
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full space-y-8">
+        {currentMode === 'buyer' ? (
+          <>
+            <HeroBanner
+              onExploreMenu={handleScrollToMenu}
+              onOpenLocation={() => setIsDirectionsOpen(true)}
+            />
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+              <div className="lg:col-span-7 xl:col-span-8">
+                <MenuCatalog items={menuItems} onAddToCart={handleAddToCart} />
+              </div>
+
+              <div className="hidden lg:block lg:col-span-5 xl:col-span-4">
+                <CartCheckout
+                  cart={cart}
+                  customerData={customerData}
+                  onUpdateCustomerData={handleUpdateCustomerData}
+                  onUpdateQuantity={handleUpdateQuantity}
+                  onRemoveItem={handleRemoveItem}
+                  onClearCart={handleClearCart}
+                  onCreateOrder={handleCreateOrder}
+                />
+              </div>
+            </div>
+
+            <OutletInfo onOpenDirections={() => setIsDirectionsOpen(true)} />
+          </>
+        ) : (
+          <MerchantDashboard
+            orders={orders}
+            menuItems={menuItems}
+            onUpdateOrderStatus={handleUpdateOrderStatus}
+            onToggleStock={handleToggleStock}
+            onReturnToBuyerMode={() => setCurrentMode('buyer')}
+          />
+        )}
+      </main>
+
+      {currentMode === 'buyer' && totalCartCount > 0 && (
+        <div className="lg:hidden fixed bottom-4 inset-x-4 z-40">
+          <button
+            onClick={() => setIsMobileCartOpen(true)}
+            className="w-full bg-red-600 hover:bg-red-700 text-white p-3.5 rounded-2xl shadow-xl flex items-center justify-between font-extrabold text-sm cursor-pointer"
+          >
+            <div className="flex items-center gap-2">
+              <span className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center text-xs">
+                {totalCartCount}
+              </span>
+              <span>Buka Keranjang Pesanan</span>
+            </div>
+            <span>Rp {totalCartSubtotal.toLocaleString('id-ID')} &rarr;</span>
+          </button>
+        </div>
+      )}
+
+      {isMobileCartOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex flex-col justify-end">
+          <div className="bg-white rounded-t-3xl max-h-[90vh] overflow-y-auto p-4 relative">
+            <button
+              onClick={() => setIsMobileCartOpen(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <div className="pt-2">
+              <CartCheckout
+                cart={cart}
+                customerData={customerData}
+                onUpdateCustomerData={handleUpdateCustomerData}
+                onUpdateQuantity={handleUpdateQuantity}
+                onRemoveItem={handleRemoveItem}
+                onClearCart={handleClearCart}
+                onCreateOrder={(order) => {
+                  handleCreateOrder(order);
+                  setIsMobileCartOpen(false);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Footer
+        onOpenLocation={() => setIsDirectionsOpen(true)}
+        onSelectMode={setCurrentMode}
+        onOpenOrderTracker={() => {
+          setTrackerSearchTerm('');
+          setIsTrackerOpen(true);
+        }}
+      />
+
+      <OrderConfirmationModal
+        isOpen={isConfirmationOpen}
+        order={confirmedOrder}
+        onClose={() => {
+          setIsConfirmationOpen(false);
+          handleScrollToMenu();
+        }}
+        onViewMyOrder={(order) => {
+          setIsConfirmationOpen(false);
+          setTrackerSearchTerm(order.orderNumber);
+          setIsTrackerOpen(true);
+        }}
+      />
+
+      <DirectionsModal
+        isOpen={isDirectionsOpen}
+        onClose={() => setIsDirectionsOpen(false)}
+      />
+
+      <OrderTrackerModal
+        isOpen={isTrackerOpen}
+        onClose={() => setIsTrackerOpen(false)}
+        orders={orders}
+        initialSearchTerm={trackerSearchTerm}
+      />
+    </div>
+  );
+}
